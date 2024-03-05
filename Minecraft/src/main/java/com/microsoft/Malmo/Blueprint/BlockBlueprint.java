@@ -125,7 +125,7 @@ public class BlockBlueprint extends Block {
             new ItemBlock(block).setRegistryName(block.getRegistryName());
         }
 
-        BLUEPRINT_VISIBLE = MalmoMod.instance.getModPermanentConfigFile().get(
+        BLUEPRINT_VISIBLE = MalmoMod.instance.getModSessionConfigFile().get(
             BLUEPRINT_CONFIGS, "visible", true).getBoolean();
     }
 

@@ -20,6 +20,7 @@
 
 from typing import Optional, List
 import os
+import json
 import argparse
 import sys
 import socket
@@ -98,7 +99,13 @@ def get_java_home() -> str:
     raise MinecraftError("Unexpected error while finding JAVA_HOME. Is Java installed?")
 
 
-def launch(num_instances=1, *, ports: Optional[List[int]] = None, timeout=60):
+def launch(
+    num_instances=1,
+    *,
+    ports: Optional[List[int]] = None,
+    timeout=60,
+    goal_visibilities: Optional[List[bool]] = None,
+):
     """
     Launch one or more Minecraft instances which Malmo can connect to.
     """
@@ -147,6 +154,10 @@ def launch(num_instances=1, *, ports: Optional[List[int]] = None, timeout=60):
                 port += 1
         else:
             port = ports[instance_index]
+        if goal_visibilities is not None:
+            goal_visibility = goal_visibilities[instance_index]
+        else:
+            goal_visibility = True
         config_dir = os.path.join(minecraft_dir, "run", "config")
         os.makedirs(config_dir, exist_ok=True)
         with open(
@@ -160,8 +171,44 @@ def launch(num_instances=1, *, ports: Optional[List[int]] = None, timeout=60):
 malmoports {{
   I:portOverride={port}
 }}
+
+blueprint {{
+    B:visible={str(goal_visibility).lower()}
+}}
 """
             )
+
+        # Edit options.txt to change resource packs depending on goal_visibility.
+        options_txt_path = os.path.join(minecraft_dir, "run", "options.txt")
+        options_lines = []
+        has_resource_pack_line = False
+        with open(options_txt_path, "r") as options_txt_file:
+            for option_line in options_txt_file:
+                if option_line.startswith("resourcePacks:"):
+                    has_resource_pack_line = True
+                    resource_packs: List[str] = json.loads(
+                        option_line[len("resourcePacks:") :].strip()
+                    )
+                    if "mbag_resource_pack.zip" not in resource_packs:
+                        resource_packs.append("mbag_resource_pack.zip")
+                    if goal_visibility:
+                        if "assistant_resource_pack.zip" in resource_packs:
+                            resource_packs.remove("assistant_resource_pack.zip")
+                    else:
+                        if "assistant_resource_pack.zip" not in resource_packs:
+                            resource_packs.append("assistant_resource_pack.zip")
+                    option_line = f"resourcePacks:{json.dumps(resource_packs)}\n"
+                options_lines.append(option_line)
+
+        if not has_resource_pack_line:
+            resource_packs = ["mbag_resource_pack.zip"]
+            if not goal_visibility:
+                resource_packs.append("assistant_resource_pack.zip")
+            options_lines.append(f"resourcePacks:{json.dumps(resource_packs)}\n")
+
+        with open(options_txt_path, "w") as options_txt_file:
+            options_txt_file.writelines(options_lines)
+
         process = subprocess.Popen(["./gradlew", "runClient"])
         timeout_remaining = timeout
         while not _port_has_listener(port):
@@ -178,6 +225,17 @@ malmoports {{
     return processes
 
 
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ("yes", "true", "t", "y", "1"):
+        return True
+    elif v.lower() in ("no", "false", "f", "n", "0"):
+        return False
+    else:
+        raise argparse.ArgumentTypeError("Boolean value expected.")
+
+
 def main():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(title="subcommands")
@@ -192,6 +250,13 @@ def main():
     launch_parser.add_argument(
         "--timeout", type=int, default=60, help="timeout in seconds"
     )
+    launch_parser.add_argument(
+        "-g",
+        "--goal_visibility",
+        type=str2bool,
+        nargs="+",
+        help="whether each instance should have blueprint/error blocks shown",
+    )
     launch_parser.set_defaults(command="launch")
 
     args = parser.parse_args()
@@ -200,6 +265,8 @@ def main():
         processes = launch(
             num_instances=args.num_instances,
             ports=args.port,
+            timeout=args.timeout,
+            goal_visibilities=args.goal_visibility,
         )
         sys.exit(max(process.wait() for process in processes))
 
