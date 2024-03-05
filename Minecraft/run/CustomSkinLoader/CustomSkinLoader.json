@@ -1,0 +1,34 @@
+{
+  "version": "14.13",
+  "buildNumber": 317,
+  "loadlist": [
+    {
+      "name": "LocalSkin",
+      "type": "Legacy",
+      "checkPNG": false,
+      "skin": "LocalSkin/skins/{USERNAME}.png",
+      "model": "auto",
+      "cape": "LocalSkin/capes/{USERNAME}.png",
+      "elytra": "LocalSkin/elytras/{USERNAME}.png"
+    },
+    {
+      "name": "Mojang",
+      "type": "MojangAPI",
+      "apiRoot": "https://api.mojang.com/",
+      "sessionRoot": "https://sessionserver.mojang.com/"
+    }
+  ],
+  "enableDynamicSkull": true,
+  "enableTransparentSkin": true,
+  "forceIgnoreHttpsCertificate": false,
+  "forceLoadAllTextures": false,
+  "enableCape": true,
+  "forceFillSkullNBT": false,
+  "threadPoolSize": 3,
+  "retryTime": 1,
+  "cacheExpiry": 30,
+  "forceUpdateSkull": false,
+  "enableLocalProfileCache": false,
+  "enableCacheAutoClean": false,
+  "forceDisableCache": false
+}
