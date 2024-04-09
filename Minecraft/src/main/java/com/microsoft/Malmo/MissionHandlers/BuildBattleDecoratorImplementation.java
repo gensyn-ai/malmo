@@ -54,6 +54,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent.BreakEvent;
 import net.minecraftforge.event.world.BlockEvent.HarvestDropsEvent;
+import net.minecraftforge.event.world.BlockEvent.NeighborNotifyEvent;
 import net.minecraftforge.event.world.BlockEvent.PlaceEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
@@ -140,8 +141,10 @@ public class BuildBattleDecoratorImplementation extends HandlerBase implements I
 
     private void createBlueprintOrErrorBlockIfNecessary(World world, BlockPos sp, BlockPos dp) {
         BlockBlueprint.EnumBlockType sourceBlueprintBlockType = this.getBlueprintBlockType(world.getBlockState(sp), true);
-        BlockBlueprint.EnumBlockType destBlueprintBlockType = this.getBlueprintBlockType(world.getBlockState(dp), true);
-        
+        IBlockState destBlockState = world.getBlockState(dp);
+        if (destBlockState.getBlock() instanceof ErrorBlock) return;
+        BlockBlueprint.EnumBlockType destBlueprintBlockType = this.getBlueprintBlockType(destBlockState, true);
+
         if (destBlueprintBlockType == null) {
             if (sourceBlueprintBlockType == null) {
                 // If there's no block in the source or destination, continue.
@@ -364,15 +367,12 @@ public class BuildBattleDecoratorImplementation extends HandlerBase implements I
         {
             this.valid = false;
             this.dest.set(blockPosToIndex(event.getPos(), this.destBounds), event.getState());
-
-            BlockPos dp = event.getPos();
-            BlockPos sp = dp.subtract(this.delta);
-            this.createBlueprintOrErrorBlockIfNecessary(event.getWorld(), sp, dp);
         }
     }
 
     @SubscribeEvent
-    public void onHarvestDrops(HarvestDropsEvent event) {
+    public void onNeighborNotify(NeighborNotifyEvent event)
+    {
         if (blockInBounds(event.getPos(), this.destBounds)) {
             BlockPos dp = event.getPos();
             BlockPos sp = dp.subtract(this.delta);

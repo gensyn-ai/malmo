@@ -68,6 +68,15 @@ public class BlockBlueprint extends Block {
         } else if (BlockBlueprint.blueprintMode == BlueprintMode.NONE) {
             return false;
         }
+
+        // Don't cover up an error or blueprint block.
+        BlockPos underPos = pos.offset(EnumFacing.DOWN);
+        IBlockState underState = blockAccess.getBlockState(underPos);
+        if (
+            underState.getBlock() instanceof BlockBlueprint
+            || underState.getBlock() instanceof ErrorBlock
+        ) return false;
+
         for (EnumFacing facing : EnumFacing.values()) {
             BlockPos neighborPos = pos.offset(facing);
             IBlockState neighborState = blockAccess.getBlockState(neighborPos);
