@@ -23,6 +23,7 @@ import io.netty.buffer.ByteBuf;
 
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.client.entity.EntityPlayerSP;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -93,6 +94,7 @@ public class InventoryCommandsImplementation extends CommandGroup
  
     public static class InventoryMessage implements IMessage
     {
+        String playerName;
         String invA;
         String invB;
         int slotA;
@@ -104,8 +106,9 @@ public class InventoryCommandsImplementation extends CommandGroup
         {
         }
 
-        public InventoryMessage(List<Object> params, boolean combine)
+        public InventoryMessage(String playerName, List<Object> params, boolean combine)
         {
+            this.playerName = playerName;
             this.invA = (String)params.get(0);
             this.slotA = (Integer)params.get(1);
             this.invB = (String)params.get(2);
@@ -118,6 +121,7 @@ public class InventoryCommandsImplementation extends CommandGroup
         @Override
         public void fromBytes(ByteBuf buf)
         {
+            this.playerName = ByteBufUtils.readUTF8String(buf);
             this.invA = ByteBufUtils.readUTF8String(buf);
             this.slotA = buf.readInt();
             this.invB = ByteBufUtils.readUTF8String(buf);
@@ -130,6 +134,7 @@ public class InventoryCommandsImplementation extends CommandGroup
         @Override
         public void toBytes(ByteBuf buf)
         {
+            ByteBufUtils.writeUTF8String(buf, this.playerName);
             ByteBufUtils.writeUTF8String(buf, this.invA);
             buf.writeInt(this.slotA);
             ByteBufUtils.writeUTF8String(buf, this.invB);
@@ -150,7 +155,8 @@ public class InventoryCommandsImplementation extends CommandGroup
         @Override
         public InventoryChangeMessage onMessage(final InventoryMessage message, MessageContext ctx)
         {
-            final EntityPlayerMP player = ctx.getServerHandler().playerEntity;
+            final EntityPlayerMP player = (EntityPlayerMP) ctx.getServerHandler().playerEntity.world.getPlayerEntityByName(message.playerName);
+
             IThreadListener mainThread = (WorldServer)ctx.getServerHandler().playerEntity.world;
             mainThread.addScheduledTask(new Runnable()
             {
@@ -348,6 +354,10 @@ public class InventoryCommandsImplementation extends CommandGroup
     @Override
     protected boolean onExecute(String verb, String parameter, MissionInit missionInit)
     {
+        EntityPlayerSP player = Minecraft.getMinecraft().player;
+        if (player == null)
+            return false;
+
         if (verb.equalsIgnoreCase(InventoryCommand.SWAP_INVENTORY_ITEMS.value()))
         {
             if (parameter != null && parameter.length() != 0)
@@ -356,7 +366,7 @@ public class InventoryCommandsImplementation extends CommandGroup
                 if (getParameters(parameter, params))
                 {
                     // All okay, so create a swap message for the server:
-                    MalmoMod.network.sendToServer(new InventoryMessage(params, false));
+                    MalmoMod.network.sendToServer(new InventoryMessage(player.getName(), params, false));
                     return true;
                 }
                 else
@@ -371,7 +381,7 @@ public class InventoryCommandsImplementation extends CommandGroup
                 if (getParameters(parameter, params))
                 {
                     // All okay, so create a combine message for the server:
-                    MalmoMod.network.sendToServer(new InventoryMessage(params, true));
+                    MalmoMod.network.sendToServer(new InventoryMessage(player.getName(), params, true));
                     return true;
                 }
                 else

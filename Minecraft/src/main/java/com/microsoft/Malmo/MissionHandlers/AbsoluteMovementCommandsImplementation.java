@@ -35,7 +35,9 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.common.network.ByteBufUtils;
 
+import net.minecraft.server.MinecraftServer;
 import com.microsoft.Malmo.MalmoMod;
 import com.microsoft.Malmo.Schemas.AbsoluteMovementCommand;
 import com.microsoft.Malmo.Schemas.AbsoluteMovementCommands;
@@ -75,15 +77,16 @@ public class AbsoluteMovementCommandsImplementation extends CommandBase
             return;
 
         // Send any changes requested over the wire to the server:
+        String playerName = player.getName();
         double x = this.setX ? this.x : 0;
         double y = this.setY ? this.y : 0;
         double z = this.setZ ? this.z : 0;
         float yaw = this.setYaw ? this.rotationYaw : 0;
         float pitch = this.setPitch ? this.rotationPitch : 0;
-
+        
         if (this.setX || this.setY || this.setZ || this.setYaw || this.setPitch)
         {
-            MalmoMod.network.sendToServer(new TeleportMessage(x, y, z, yaw, pitch, this.setX, this.setY, this.setZ, this.setYaw, this.setPitch));
+            MalmoMod.network.sendToServer(new TeleportMessage(playerName, x, y, z, yaw, pitch, this.setX, this.setY, this.setZ, this.setYaw, this.setPitch));
             if (this.setYaw || this.setPitch)
             {
                 // Send a message that the ContinuousMovementCommands can pick up on:
@@ -96,6 +99,8 @@ public class AbsoluteMovementCommandsImplementation extends CommandBase
 
     public static class TeleportMessage implements IMessage
     {
+        private String playerName = null;
+
         private double x = 0;
         private double y = 0;
         private double z = 0;
@@ -112,8 +117,10 @@ public class AbsoluteMovementCommandsImplementation extends CommandBase
         {
         }
 
-        public TeleportMessage(double x, double y, double z, float yaw, float pitch, boolean setX, boolean setY, boolean setZ, boolean setYaw, boolean setPitch)
+        public TeleportMessage(String playerName, double x, double y, double z, float yaw, float pitch, boolean setX, boolean setY, boolean setZ, boolean setYaw, boolean setPitch)
         {
+            this.playerName = playerName;
+
             this.x = x;
             this.y = y;
             this.z = z;
@@ -130,6 +137,8 @@ public class AbsoluteMovementCommandsImplementation extends CommandBase
         @Override
         public void fromBytes(ByteBuf buf)
         {
+            this.playerName = ByteBufUtils.readUTF8String(buf);
+
             this.x = buf.readDouble();
             this.y = buf.readDouble();
             this.z = buf.readDouble();
@@ -146,6 +155,8 @@ public class AbsoluteMovementCommandsImplementation extends CommandBase
         @Override
         public void toBytes(ByteBuf buf)
         {
+            ByteBufUtils.writeUTF8String(buf, this.playerName);
+
             buf.writeDouble(this.x);
             buf.writeDouble(this.y);
             buf.writeDouble(this.z);
@@ -188,8 +199,9 @@ public class AbsoluteMovementCommandsImplementation extends CommandBase
                         enumset.add(SPacketPlayerPosLook.EnumFlags.Y_ROT);
                     if (!message.setPitch)
                         enumset.add(SPacketPlayerPosLook.EnumFlags.X_ROT);
+                    
+                    EntityPlayerMP player = (EntityPlayerMP) ctx.getServerHandler().playerEntity.world.getPlayerEntityByName(message.playerName);
 
-                    EntityPlayerMP player = ctx.getServerHandler().playerEntity;
                     player.dismountRidingEntity();
                     player.connection.setPlayerLocation(message.x, message.y, message.z, message.yaw, message.pitch, enumset);
                     player.setRotationYawHead(message.yaw);
