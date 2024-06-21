@@ -29,6 +29,7 @@ import com.microsoft.Malmo.Utils.MinecraftTypeHelper;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
@@ -198,9 +199,10 @@ public class ObservationFromFullInventoryImplementation extends ObservationFromS
     public static void getInventoryJSON(JsonObject json, String prefix, IInventory inventory, int maxSlot)
     {
         int nSlots = Math.min(inventory.getSizeInventory(), maxSlot);
+        ItemStack is;
         for (int i = 0; i < nSlots; i++)
         {
-            ItemStack is = inventory.getStackInSlot(i);
+            is = inventory.getStackInSlot(i);
             if (is != null)
             {
                 json.addProperty(prefix + i + "_size", is.getCount());
@@ -211,6 +213,21 @@ public class ObservationFromFullInventoryImplementation extends ObservationFromS
                 if (di.getVariant() != null)
                     json.addProperty(prefix + i + "_variant", di.getVariant().getValue());
                 json.addProperty(prefix + i + "_item", name);
+            }
+        }
+        if (inventory instanceof InventoryPlayer) {
+            InventoryPlayer playerInv = (InventoryPlayer)inventory;
+            is = playerInv.getItemStack();
+            if (is != null)
+            {
+                json.addProperty(prefix + "held_size", is.getCount());
+                DrawItem di = MinecraftTypeHelper.getDrawItemFromItemStack(is);
+                String name = di.getType();
+                if (di.getColour() != null)
+                    json.addProperty(prefix + "held_colour",  di.getColour().value());
+                if (di.getVariant() != null)
+                    json.addProperty(prefix + "held_variant", di.getVariant().getValue());
+                json.addProperty(prefix + "held_item", name);
             }
         }
     }
