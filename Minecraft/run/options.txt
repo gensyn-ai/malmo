@@ -15,7 +15,7 @@ difficulty:2
 fancyGraphics:false
 ao:0
 renderClouds:true
-resourcePacks:[]
+resourcePacks:["mbag_resource_pack.zip","assistant_resource_pack.zip"]
 incompatibleResourcePacks:[]
 lastServer:
 lang:en_us
@@ -83,7 +83,10 @@ key_key.hotbar.8:9
 key_key.hotbar.9:10
 key_key.toggleMalmo:28
 key_key.handyTestHook:22
-key_key.toggleFullBlueprint:19
+key_key.toggleBlueprintMode:19
+key_Toggle Flight:211
+key_Fly Faster:78
+key_Fly Slower:74
 key_key.toggleLiquids:38
 key_key.toggleVisible:0
 soundCategory_master:0.0
