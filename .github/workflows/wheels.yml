@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu, macOS]
+        os: [ubuntu]
 
     steps:
       - uses: actions/checkout@v3
@@ -99,7 +99,7 @@ jobs:
           java-version: '8'
 
       - name: Download wheels
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: wheels-${{ matrix.os }}
           path: wheelhouse
