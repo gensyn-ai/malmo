@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu, macOS]
+        os: [ubuntu]
 
     steps:
       - uses: actions/checkout@v3
@@ -71,7 +71,7 @@ jobs:
           CIBW_ENVIRONMENT="REPAIR_LIBRARY_PATH=$(pwd)/deps/lib" python -m cibuildwheel --output-dir wheelhouse
 
       - name: Upload wheels
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: wheels-${{ matrix.os }}
           path: scripts/python-wheel/package/wheelhouse/*.whl
