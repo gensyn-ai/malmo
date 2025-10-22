@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu, macOS]
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-13, macos-14]
 
     steps:
       - uses: actions/checkout@v3
@@ -79,11 +79,11 @@ jobs:
   test_wheels:
     name: Test wheels on ${{ matrix.os }} Python ${{ matrix.pyversion }}
     needs: build_wheels
-    runs-on: [self-hosted, "${{ matrix.os }}"]
+    runs-on: "${{ matrix.os }}"
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu]
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-13, macos-14]
         pyversion: ["3.8", "3.9", "3.10"]
 
     steps:
