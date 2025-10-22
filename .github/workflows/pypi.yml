@@ -15,7 +15,7 @@ jobs:
         with:
           github_token: ${{secrets.GITHUB_TOKEN}}
           workflow: wheels.yml
-          workflow_conclusion: ''
+          workflow_conclusion: ""
 
       - name: Copy wheels to dist
         run: |
