@@ -106,7 +106,7 @@ jobs:
       
       - name: Install wheel
         run: |
-          pip uninstall -y mbag-malmo || true
+          pip uninstall -y mbag-malmo-gensyn || true
           pip uninstall -y malmo || true
           # Kind of janky, but loop through until we find the right wheel.
           for WHEEL in wheelhouse/*.whl; do pip install "$WHEEL" || true; done
